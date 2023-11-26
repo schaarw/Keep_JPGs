@@ -20,6 +20,8 @@ Download the latest release from [GitHub Releases page](https://github.com/schaa
 *NOTE:* Since Adobe Lightroom Classic CC doesn't copy plug-in files on installation to any safe place, you normally should choose a place your not going to delete plug-in file from.
 Usually for plugins is used `~/Library/Application\ Support/Adobe/Lightroom/Plugins/` or something like that.
 
+To see the logging information use the macOS tool Konsole and filter for "Keep_JPGs". 
+
 # Usage
 
 You may select one or more photos which are named like photo_name.dng+JPEG. Then 

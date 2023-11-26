@@ -20,7 +20,7 @@ local LrPathUtils = import 'LrPathUtils'
 
 -- Create the logger and enable the print function.
 
-local myLogger = LrLogger( 'libraryLogger' )
+local myLogger = LrLogger( 'Keep_JPGs' )
 myLogger:enable( "print" ) -- Pass either a string or a table of actions
 
 -- Write trace information to the logger.
@@ -35,6 +35,9 @@ LrTasks.startAsyncTask(function ()
   local catalog = LrApplication.activeCatalog()
   local photos = catalog:getTargetPhotos()
   local jpg_ratings = {}
+  local raws_deleted = 0
+  local jpg_imported = 0
+
   local message = string.format( "%q fotos selected, continue?", #photos )
   --outputToLog( "%s", message )
   local user_confirmation = LrDialogs.confirm( "Proceed?", message )
@@ -52,13 +55,13 @@ LrTasks.startAsyncTask(function ()
         rating = 0
       end
 
-      --outputToLog( "The selected photo's filename is %q", filename)
-      --outputToLog( "Its availability is %q", available )
-      --outputToLog( "Its type is %s", fileType )
-      --outputToLog( "Its rating is %s", rating )
+      outputToLog( "The selected photo's filename is %q", filename)
+      outputToLog( "Its availability is %q", available )
+      outputToLog( "Its type is %s", fileType )
+      outputToLog( "Its rating is %s", rating )
 
-      local is_raw =  string.find(fileType, "NEF") or string.find(fileType, "DNG")
-      --outputToLog("is_raw is %s", is_raw)
+      local is_raw =  string.find(fileType, "RAW") or string.find(fileType, "DNG")
+      outputToLog("is_raw is %s", is_raw)
 
       -- rating < 3 = do not delete high rated raws by mistake
       if is_raw and available and rating < 3 then
@@ -75,6 +78,7 @@ LrTasks.startAsyncTask(function ()
           if LrFileUtils.moveToTrash( path ) then
             outputToLog("Raw file %s moved successfully to the trash.", filename)
             jpg_ratings[jpg_version] = rating
+            raws_deleted = raws_deleted + 1
           else
             outputToLog("Raw file %s could not be moved to the trash.", filename)
           end
@@ -87,7 +91,6 @@ LrTasks.startAsyncTask(function ()
       i = i + 1
     end
 
-
     -- adding the JPG version to the catalog and
     -- set the rating as it was on the DNG version
     catalog:withWriteAccessDo('ImportJPEGversions', function(context) 
@@ -97,11 +100,13 @@ LrTasks.startAsyncTask(function ()
         if rating > 0 then
           photo:setRawMetadata( "rating", rating )
         end
+        jpg_imported = jpg_imported + 1
       end 
       
     end ) 
-    if #jpg_ratings > 0 then
-      message = string.format( "%q raw photos moved to trash and jpg version imported. Please synch the folder.", #jpg_ratings )
+
+    if raws_deleted > 0 then
+      message = string.format( "%q raw photos moved to trash. %q jpg versions imported. Please synch the folder.", raws_deleted, jpg_imported )
     else
       message = "No raw photos removed."
     end
